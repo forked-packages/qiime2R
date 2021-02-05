@@ -15,38 +15,45 @@
 #'
 #'
 
-qza_to_phyloseq<-function(features,tree,taxonomy,metadata, tmp){
+qza_to_phyloseq <- function(features = NULL, tree = NULL, taxonomy = NULL,
+                            metadata = NULL, tmp = NULL){
 
-   if(missing(features) & missing(tree) & missing(taxonomy) & missing(metadata)){
+  if (is.null(features) & is.null(tree) & is.null(taxonomy) & is.null(metadata)) {
     stop("At least one required artifact is needed (features/tree/taxonomy/) or the metadata.")
-   }
-  
-if(missing(tmp)){tmp <- tempdir()}
+  }
 
-  argstring<-""
+  if(is.null(tmp)) {tmp <- tempdir()}
 
-  if(!missing(features)){
+  argstring <- ""
+
+  if (!is.null(features)){
     features<-read_qza(features, tmp=tmp)$data
     argstring<-paste(argstring, "otu_table(features, taxa_are_rows=T),")
   }
 
-  if(!missing(taxonomy)){
+  if(!is.null(taxonomy)){
     taxonomy<-read_qza(taxonomy, tmp=tmp)$data
     taxonomy<-parse_taxonomy(taxonomy)
     taxonomy<-as.matrix(taxonomy)
     argstring<-paste(argstring, "tax_table(taxonomy),")
   }
 
-  if(!missing(tree)){
+  if(!is.null(tree)){
     tree<-read_qza(tree, tmp=tmp)$data
     argstring<-paste(argstring, "phy_tree(tree),")
   }
 
-  if(!missing(metadata)){
-    if(is_q2metadata(metadata)){
+  if(!is.null(metadata)){
+    if (is.data.frame(metadata)) {
+      # Use metadata as-is
+      rownames(metadata)<-metadata$SampleID
+      metadata$SampleID<-NULL
+
+    } else if(is_q2metadata(metadata)){
       metadata<-read_q2metadata(metadata)
       rownames(metadata)<-metadata$SampleID
       metadata$SampleID<-NULL
+
     } else{
       metadata<-read.table(metadata, row.names=1, sep='\t', quote="", header=TRUE)
     }
