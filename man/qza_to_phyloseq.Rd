@@ -4,7 +4,13 @@
 \alias{qza_to_phyloseq}
 \title{generates a phyloseq object from .qza artifacts}
 \usage{
-qza_to_phyloseq(features, tree, taxonomy, metadata, tmp)
+qza_to_phyloseq(
+  features = NULL,
+  tree = NULL,
+  taxonomy = NULL,
+  metadata = NULL,
+  tmp = NULL
+)
 }
 \arguments{
 \item{features}{file path for artifact containing a feature (OTU/SV) table}
