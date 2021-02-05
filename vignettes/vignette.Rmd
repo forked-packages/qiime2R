@@ -12,11 +12,21 @@ output:
 ---
 
 # Background
-The [qiime artifact](https://docs.qiime2.org/2018.4/concepts/#data-files-qiime-2-artifacts) is a method for storing the input and outputs for [QIIME2](https://qiime2.org/) along with associated metadata and provenance information about how the object was formed. This method of storing objects has a number of obvious advantages; however, on the surface it does not lend itself to easy import to R for the R-minded data scientist. In reality, the .qza file is a compressed directory with an intuitive structure. 
+The [qiime artifact](https://docs.qiime2.org/2020.11/concepts/#data-files-qiime-2-artifacts) is a method for storing the input and outputs for [QIIME2](https://qiime2.org/) along with associated metadata and provenance information about how the object was formed. This method of storing objects has a number of obvious advantages; however, on the surface it does not lend itself to easy import to R for the R-minded data scientist. In reality, the .qza file is a compressed directory with an intuitive structure. 
 
 This package is trying to simplify the process of getting the artifact into R without discarding any of the associated data through a simple `read_qza()` function. The artifact is unpacked in to /tmp (or another directory if specified using `tmp="/yourdirhere"`) and the raw data and associated metadata are read into a named list (see below). The object is then removed from the tmp dir (unless user specifies `rm=F`). Data are typically returned as either a matrix, data.frame, phylo object (trees), or DNAStringSets (nucleic acid sequences). In addition a `qza_to_phyloseq()` wrapper is provided to generate a [phyloseq](https://www.bioconductor.org/packages/release/bioc/html/phyloseq.html) object for further analysis. It also provides a `print_provenance()` function for summarizing how the data was generated.
 
 In this analysis we will use the qiime2R, phyloseq, and tidyverse libraries.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  eval       = FALSE,
+  fig.height = 3,
+  fig.width  = 5,
+  fig.align  = "center"
+)
+```
 
 ```{r}
 library(qiime2R)
@@ -26,11 +36,16 @@ library(tidyverse)
 
 # Reading a .qza file
 
-Here we are using data from the [QIIME2 moving pictures tutorial](https://docs.qiime2.org/2018.4/tutorials/moving-pictures/). We start by reading the dada2-derived otu table.
+Here we are using data from the [QIIME2 moving pictures tutorial](https://docs.qiime2.org/2020.11/tutorials/moving-pictures/). We start by reading the dada2-derived otu table.
 
 ```{r}
-download.file("https://docs.qiime2.org/2018.4/data/tutorials/moving-pictures/table.qza", "table.qza")
-SequenceVariants<-read_qza("table.qza")
+dir.create("data")
+download.file(
+  "https://docs.qiime2.org/2020.11/data/tutorials/moving-pictures/table.qza",
+  "data/table.qza",
+  mode = "wb"
+)
+SequenceVariants <- read_qza("table.qza")
 ```
 
 We can now view the associate data stored in this object by examining the names of the data stored within:
@@ -41,13 +56,13 @@ names(SequenceVariants)
 
 The following information is stored within the object:
 
-* data - this contains your data in the R appropriate format, for example a feature table or phylogenetic tree
-* uuid - a unique identifier for the artifact
-* type - the data type stored within, see qiime2 documentation
-* format - the format the data is stored in, see qiime2 documentation
-* contents - the files stored within the object and their size
-* version - the version of the artifact, current testing has been on version 2018.4
-* provenance - information about how and where the data was generated
+* `data` -- this contains your data in the R appropriate format, for example a feature table or phylogenetic tree
+* `uuid` -- a unique identifier for the artifact
+* `type` -- the data type stored within, see qiime2 documentation
+* `format` -- the format the data is stored in, see qiime2 documentation
+* `contents` -- the files stored within the object and their size
+* `version` -- the version of the artifact, current testing has been on version 2020.11
+* `provenance` -- information about how and where the data was generated
 
 # Understanding provenance
 
@@ -62,11 +77,29 @@ print_provenance(SequenceVariants)
 Many R users may wish to use phyloseq to help analyze their data. There is a wrapper function called `qza_to_phyloseq()` to assist with this purpose. We will download the associated tree, metadata, and taxonomy to build the object. At least two of the above items will be required to build a phyloseq object.
 
 ```{r}
-download.file("https://data.qiime2.org/2018.4/tutorials/moving-pictures/sample_metadata.tsv", "sample_metadata.tsv")
-download.file("https://docs.qiime2.org/2018.4/data/tutorials/moving-pictures/taxonomy.qza", "taxonomy.qza")
-download.file("https://docs.qiime2.org/2018.4/data/tutorials/moving-pictures/rooted-tree.qza", "rooted-tree.qza")
+download.file(
+  "https://data.qiime2.org/2020.11/tutorials/moving-pictures/sample_metadata.tsv",
+  "data/sample_metadata.tsv",
+  mode = "wb"
+)
+download.file(
+  "https://docs.qiime2.org/2020.11/data/tutorials/moving-pictures/taxonomy.qza",
+  "data/taxonomy.qza",
+  mode = "wb"
+)
+download.file(
+  "https://docs.qiime2.org/2020.11/data/tutorials/moving-pictures/rooted-tree.qza",
+  "data/rooted-tree.qza",
+  mode = "wb"
+)
 
-phyobj<-qza_to_phyloseq(features="table.qza", taxonomy = "taxonomy.qza", tree = "rooted-tree.qza", metadata="sample_metadata.tsv")
+phyobj <-
+  qza_to_phyloseq(
+    features = "table.qza",
+    taxonomy = "taxonomy.qza",
+    tree     = "rooted-tree.qza",
+    metadata = "sample_metadata.tsv"
+  )
 
 phyobj
 ```
@@ -76,50 +109,59 @@ phyobj
 We can use ggplot2 to graph data generated by QIIME2 in R allowing for advanced graphing parameters. Using the Shannon Diversity metrics generated in the moving pictures tutorial, we will plot the diversity over time by participant. See ggplot2 documentation for the vast array of plotting options available.
 
 ```{r}
-download.file("https://docs.qiime2.org/2018.4/data/tutorials/moving-pictures/core-metrics-results/shannon_vector.qza", "shannon_vector.qza")
+download.file(
+  "https://docs.qiime2.org/2020.11/data/tutorials/moving-pictures/core-metrics-results/shannon_vector.qza", 
+  "data/shannon_vector.qza",
+  mode = "wb"
+)
 
-metadata<-
-  read_tsv("sample_metadata.tsv", comment="#q2:types") #to exclude the column denoting the variable class
+metadata <-
+  #to exclude the column denoting the variable class
+  read_tsv("sample_metadata.tsv", comment = "#q2:types") 
 
 read_qza("shannon_vector.qza")$data %>%
   as.data.frame() %>%
   rownames_to_column("#SampleID") %>% # to allow a smooth joining with the metadata
-  left_join(metadata) %>%
+  left_join(metadata, by = c("#SampleID" = "sample-id")) %>%
   ggplot(
     aes(
-      x=DaysSinceExperimentStart, 
-      y=shannon, 
-      group=BodySite, 
-      color=BodySite, 
-      shape=ReportedAntibioticUsage)
+      x = `days-since-experiment-start`,
+      y = shannon_entropy,
+      group = `body-site`,
+      color = `body-site`,
+      shape = `reported-antibiotic-usage`)
         ) +
   geom_line() +
   geom_point() +
-  facet_wrap(~Subject) + #make a separate plot for each subject
+  facet_wrap(~subject) + #make a separate plot for each subject
   theme_bw()
 ```
 
 Similarily we could use this approach to match more metadata onto a PCoA analysis of say unweighted UniFrac Distances. When a PCoA is imported, data will contain two peices of information: .\$data\$ProportionExplained as well as the vectors themselves .\$data\$Vectors.
 
 ```{r}
-download.file("https://docs.qiime2.org/2018.4/data/tutorials/moving-pictures/core-metrics-results/unweighted_unifrac_pcoa_results.qza", "unweighted_unifrac_pcoa_results.qza")
+download.file(
+  "https://docs.qiime2.org/2020.11/data/tutorials/moving-pictures/core-metrics-results/unweighted_unifrac_pcoa_results.qza",
+  "data/unweighted_unifrac_pcoa_results.qza",
+  mode = "wb"
+)
 
-pcoa<-read_qza("unweighted_unifrac_pcoa_results.qza")$data
+pcoa <- read_qza("unweighted_unifrac_pcoa_results.qza")$data
 pcoa$Vectors %>%
-  rename("#SampleID"=SampleID) %>% # to match the metadata
-  left_join(metadata) %>%
+  rename("sample-id" = SampleID) %>% # to match the metadata
+  left_join(metadata, by = "sample-id") %>%
   ggplot(
     aes(
-      x=PC1, 
-      y=PC2, 
-      color=BodySite,
-      shape=Subject
-        )
-    ) +
+      x = PC1,
+      y = PC2,
+      color = `body-site`,
+      shape = subject
+    )
+  ) +
   geom_point() +
   theme_bw() +
-  xlab(paste0("PC1: ", pcoa$ProportionExplained["PC1"])) + #add variance explained to axis
-  ylab(paste0("PC2: ", pcoa$ProportionExplained["PC2"]))
-
+  # add variance explained to axis
+  xlab(paste0("PC1: ", round(100 * pcoa$ProportionExplained["PC1"], digits = 1))) + 
+  ylab(paste0("PC2: ", round(100 * pcoa$ProportionExplained["PC2"], digits = 1)))
 ```
 
