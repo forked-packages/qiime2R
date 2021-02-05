@@ -89,3 +89,9 @@ if(rm==TRUE){unlink(paste0(tmp,"/", artifact$uuid), recursive=TRUE)}
 return(structure(artifact, class = c("qiime2_artifact", class(artifact))))
 }
 
+#' @rdname read_qza
+#' @export
+print.qiime2_artifact <- function(x, ...) {
+  cat("QIIME 2 artifact (.qza) object. ")
+  cat(str(x, max.level = 1, give.attr = FALSE))
+}
