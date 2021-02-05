@@ -29,10 +29,10 @@ if(missing(file)){stop("Path to artifact (.qza) not provided.")}
 if(!file.exists(file)){stop("Input artifact (",file,") not found. Please check path and/or use list.files() to see files in current working directory.")}
 if(missing(rm)){rm=TRUE} #remove the decompressed object from tmp
 if(!grepl("qza$", file)){stop("Provided file is not qiime2 artifact (.qza).")}
-  
-  
-  
-unzip(file, exdir=tmp) 
+
+
+
+unzip(file, exdir=tmp)
 unpacked<-unzip(file, exdir=tmp, list=TRUE)
 
 artifact<-read_yaml(paste0(tmp,"/", paste0(gsub("/..+","", unpacked$Name[1]),"/metadata.yaml"))) #start by loading in the metadata not assuming it will be first file listed
@@ -41,7 +41,7 @@ artifact$contents$size=sapply(paste0(tmp, "/", artifact$contents$files), file.si
 artifact$version=read.table(paste0(tmp,"/",artifact$uuid, "/VERSION"))
 
 
-  #get data dependent on format
+#get data dependent on format
 if(grepl("BIOMV", artifact$format)){
   artifact$data<-read_q2biom(paste0(tmp, "/", artifact$uui,"/data/feature-table.biom"))
 } else if (artifact$format=="NewickDirectoryFormat"){
@@ -86,5 +86,6 @@ names(artifact$provenance)<-grep("..+provenance/..+action.yaml", unpacked$Name, 
 if(rm==TRUE){unlink(paste0(tmp,"/", artifact$uuid), recursive=TRUE)}
 
 
-return(artifact)
+return(structure(artifact, class = c("qiime2_artifact", class(artifact))))
 }
+
